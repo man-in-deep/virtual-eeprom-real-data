@@ -4,6 +4,12 @@ let updateInterval = null;
 let startTime = null;
 let wearChart = null;
 let accuracyChart = null;
+let csvWearChart = null;
+let csvAccuracyChart = null;
+let csvOpsChart = null;
+let csvHealthChart = null;
+let currentTestRun = null;
+let testStartTime = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -12,13 +18,18 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('stopBtn').addEventListener('click', stopSimulation);
     document.getElementById('resetBtn').addEventListener('click', resetSimulation);
     document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('refreshCsvBtn').addEventListener('click', loadCsvList);
+    document.getElementById('loadCsvBtn').addEventListener('click', loadSelectedCsv);
+    document.getElementById('refreshCsvListBtn').addEventListener('click', loadCsvList);
     
     // Initialize charts
     initCharts();
+    initCsvCharts();
     
     // Initial data fetch
     fetchStats();
     fetchTestResults();
+    loadCsvList();
     
     // Start periodic updates
     startTime = Date.now();
@@ -53,6 +64,80 @@ function initCharts() {
         }], {
             margin: {t: 10, r: 10, b: 40, l: 50},
             yaxis: {range: [0, 100], title: 'Accuracy %'}
+        });
+    }
+}
+
+function initCsvCharts() {
+    // CSV Wear chart
+    const csvWearDiv = document.getElementById('csvWearChart');
+    if (csvWearDiv) {
+        csvWearChart = Plotly.newPlot(csvWearDiv, [{
+            y: [],
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Wear Balance',
+            line: {color: '#3b82f6', width: 2}
+        }], {
+            margin: {t: 20, r: 20, b: 40, l: 50},
+            yaxis: {title: 'Balance %'}
+        });
+    }
+    
+    // CSV Accuracy chart
+    const csvAccDiv = document.getElementById('csvAccuracyChart');
+    if (csvAccDiv) {
+        csvAccuracyChart = Plotly.newPlot(csvAccDiv, [{
+            y: [],
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Accuracy',
+            line: {color: '#8b5cf6', width: 2}
+        }], {
+            margin: {t: 20, r: 20, b: 40, l: 50},
+            yaxis: {title: 'Accuracy %'}
+        });
+    }
+    
+    // CSV Ops chart
+    const csvOpsDiv = document.getElementById('csvOpsChart');
+    if (csvOpsDiv) {
+        csvOpsChart = Plotly.newPlot(csvOpsDiv, [{
+            y: [],
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Writes',
+            line: {color: '#10b981', width: 2}
+        }, {
+            y: [],
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Reads',
+            line: {color: '#f59e0b', width: 2}
+        }], {
+            margin: {t: 20, r: 20, b: 40, l: 50},
+            yaxis: {title: 'Count'}
+        });
+    }
+    
+    // CSV Health chart
+    const csvHealthDiv = document.getElementById('csvHealthChart');
+    if (csvHealthDiv) {
+        csvHealthChart = Plotly.newPlot(csvHealthDiv, [{
+            y: [],
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'P3 Health',
+            line: {color: '#ec4899', width: 2}
+        }, {
+            y: [],
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'P2 Health',
+            line: {color: '#8b5cf6', width: 2}
+        }], {
+            margin: {t: 20, r: 20, b: 40, l: 50},
+            yaxis: {title: 'Health %', range: [0, 100]}
         });
     }
 }
@@ -256,15 +341,20 @@ function runTest(testName) {
         element.className = 'test-status running';
     }
     
+    // Show test details panel
+    showTestDetails(testName);
+    
+    testStartTime = Date.now();
+    
     fetch(`/api/run-test/${testName}`)
         .then(response => response.json())
         .then(data => {
             updateTestStatus(testName, data);
             button.style.opacity = '1';
             
-            // Show test details in console for debugging
+            // Show test details
             if (data.details) {
-                console.log(`Test ${testName} results:`, data.details);
+                displayTestDetails(testName, data);
             }
         })
         .catch(error => {
@@ -277,4 +367,160 @@ function runTest(testName) {
                 element.className = 'test-status failed';
             }
         });
+}
+
+function showTestDetails(testName) {
+    const panel = document.getElementById('testDetailsPanel');
+    const title = document.getElementById('testDetailsTitle');
+    panel.style.display = 'block';
+    
+    let displayName = '';
+    switch(testName) {
+        case 'flash': displayName = 'Flash Simulation Test'; break;
+        case 'adaptive': displayName = 'Patent 1: Adaptive Wear Test'; break;
+        case 'predictive': displayName = 'Patent 2: Predictive Retirement Test'; break;
+        case 'self_healing': displayName = 'Patent 3: Self-Healing Test'; break;
+        case 'integration': displayName = 'Integration Test'; break;
+        default: displayName = testName;
+    }
+    title.textContent = displayName;
+    
+    document.getElementById('testDetailsContent').innerHTML = `
+        <div class="test-progress">
+            <div class="progress-bar" id="testProgressBar" style="width: 0%;">0%</div>
+        </div>
+        <div class="test-stats">
+            <div class="stat">Passed: <span id="testPassed">0</span></div>
+            <div class="stat">Total: <span id="testTotal">0</span></div>
+            <div class="stat">Time: <span id="testTime">0s</span></div>
+        </div>
+        <div class="test-steps" id="testSteps">Running tests...</div>
+    `;
+}
+
+function closeTestDetails() {
+    document.getElementById('testDetailsPanel').style.display = 'none';
+}
+
+function displayTestDetails(testName, data) {
+    const details = data.details;
+    if (!details) return;
+    
+    const passed = details.passed || 0;
+    const total = details.total || 0;
+    const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
+    const elapsed = ((Date.now() - testStartTime) / 1000).toFixed(1);
+    
+    document.getElementById('testPassed').textContent = passed;
+    document.getElementById('testTotal').textContent = total;
+    document.getElementById('testTime').textContent = elapsed + 's';
+    
+    const progressBar = document.getElementById('testProgressBar');
+    progressBar.style.width = percentage + '%';
+    progressBar.textContent = percentage + '%';
+    
+    let stepsHtml = '<ul class="test-steps-list">';
+    if (details.details && Array.isArray(details.details)) {
+        details.details.forEach(step => {
+            const status = step.includes('✅') ? 'passed' : (step.includes('❌') ? 'failed' : '');
+            stepsHtml += `<li class="test-step ${status}">${step}</li>`;
+        });
+    }
+    stepsHtml += '</ul>';
+    
+    document.getElementById('testSteps').innerHTML = stepsHtml;
+}
+
+function loadCsvList() {
+    fetch('/api/csv-list')
+        .then(response => response.json())
+        .then(files => {
+            const select = document.getElementById('csvFileSelect');
+            select.innerHTML = '<option value="">Select CSV file...</option>';
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.textContent = file;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading CSV list:', error));
+}
+
+function loadSelectedCsv() {
+    const select = document.getElementById('csvFileSelect');
+    const filename = select.value;
+    if (!filename) {
+        alert('Please select a CSV file');
+        return;
+    }
+    
+    document.getElementById('lastCsvFile').textContent = filename;
+    
+    fetch(`/api/csv-data/${filename}`)
+        .then(response => response.json())
+        .then(data => {
+            updateCsvDashboard(data);
+        })
+        .catch(error => console.error('Error loading CSV data:', error));
+}
+
+function updateCsvDashboard(data) {
+    if (!data || !data.summary) return;
+    
+    // Update metrics
+    document.getElementById('csvTotalPoints').textContent = data.summary.total_points || 0;
+    document.getElementById('csvAvgWear').textContent = (data.summary.avg_wear_balance || 0).toFixed(1) + '%';
+    document.getElementById('csvAvgAccuracy').textContent = (data.summary.avg_accuracy || 0).toFixed(1) + '%';
+    document.getElementById('csvTotalWrites').textContent = data.summary.total_writes || 0;
+    
+    // Update summary text
+    const summaryText = `
+Total Data Points: ${data.summary.total_points}
+Date Range: ${data.summary.start_date} to ${data.summary.end_date}
+Total Writes: ${data.summary.total_writes}
+Total Reads: ${data.summary.total_reads}
+Total Erases: ${data.summary.total_erases}
+Avg Wear Balance: ${data.summary.avg_wear_balance.toFixed(1)}%
+Avg Accuracy: ${data.summary.avg_accuracy.toFixed(1)}%
+Avg P3 Health: ${data.summary.avg_p3_health.toFixed(1)}%
+Max Write Time: ${data.summary.max_write_time}μs
+Min Write Time: ${data.summary.min_write_time}μs
+    `;
+    document.getElementById('csvSummaryText').textContent = summaryText;
+    
+    // Update charts
+    if (data.charts && data.charts.timestamps) {
+        // Wear chart
+        if (csvWearChart && data.charts.wear_balance) {
+            Plotly.update('csvWearChart', {
+                x: [data.charts.timestamps],
+                y: [data.charts.wear_balance]
+            });
+        }
+        
+        // Accuracy chart
+        if (csvAccuracyChart && data.charts.accuracy) {
+            Plotly.update('csvAccuracyChart', {
+                x: [data.charts.timestamps],
+                y: [data.charts.accuracy]
+            });
+        }
+        
+        // Ops chart
+        if (csvOpsChart) {
+            Plotly.update('csvOpsChart', {
+                x: [data.charts.timestamps, data.charts.timestamps],
+                y: [data.charts.writes || [], data.charts.reads || []]
+            });
+        }
+        
+        // Health chart
+        if (csvHealthChart) {
+            Plotly.update('csvHealthChart', {
+                x: [data.charts.timestamps, data.charts.timestamps],
+                y: [data.charts.p3_health || [], data.charts.p2_health || []]
+            });
+        }
+    }
 }

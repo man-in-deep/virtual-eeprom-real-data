@@ -93,6 +93,11 @@ header h2 {
     color: white;
 }
 
+.btn-primary {
+    background: #8b5cf6;
+    color: white;
+}
+
 .status-bar {
     display: flex;
     gap: 30px;
@@ -100,6 +105,7 @@ header h2 {
     padding: 15px 20px;
     border-radius: 10px;
     margin-bottom: 30px;
+    flex-wrap: wrap;
 }
 
 .status-item {
@@ -208,6 +214,101 @@ header h2 {
     height: 300px;
 }
 
+/* CSV Dashboard Styles */
+.csv-dashboard {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.csv-dashboard h3 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.csv-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.csv-select {
+    padding: 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    min-width: 300px;
+    background: white;
+}
+
+.csv-select:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+.csv-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.metric-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+
+.metric-card h4 {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.metric-value {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #333;
+}
+
+.csv-charts {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.csv-chart {
+    height: 250px;
+    width: 100%;
+}
+
+.csv-summary {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.csv-summary h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.csv-summary pre {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: monospace;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
 .comparison {
     background: white;
     border-radius: 15px;
@@ -252,11 +353,13 @@ header h2 {
     color: white;
 }
 
+/* Enhanced Test Results Styles */
 .test-results {
     background: white;
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    position: relative;
 }
 
 .test-results h3 {
@@ -301,10 +404,130 @@ header h2 {
     color: #f59e0b;
 }
 
+.test-details-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 800px;
+    max-height: 80vh;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.test-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.test-details-header h4 {
+    color: #333;
+    font-size: 1.2em;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #666;
+    padding: 0 10px;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.test-details-content {
+    padding: 20px;
+    max-height: calc(80vh - 70px);
+    overflow-y: auto;
+}
+
+.test-progress {
+    height: 30px;
+    background: #f0f0f0;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    color: white;
+    text-align: center;
+    line-height: 30px;
+    font-weight: 600;
+    transition: width 0.3s ease;
+}
+
+.test-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.test-stats .stat {
+    flex: 1;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.test-stats .stat span {
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+.test-steps {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.test-steps-list {
+    list-style: none;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.test-step {
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: white;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 0.9em;
+    border-left: 3px solid #e0e0e0;
+}
+
+.test-step.passed {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+}
+
+.test-step.failed {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+}
+
 @media (max-width: 768px) {
     .patent-summary,
     .charts,
-    .comparison-grid {
+    .comparison-grid,
+    .csv-metrics,
+    .csv-charts {
         grid-template-columns: 1fr;
     }
     
@@ -314,5 +537,13 @@ header h2 {
     
     .btn {
         width: 100%;
+    }
+    
+    .test-details-panel {
+        width: 95%;
+    }
+    
+    .csv-select {
+        min-width: 100%;
     }
 }

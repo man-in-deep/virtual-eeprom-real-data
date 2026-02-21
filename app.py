@@ -11,7 +11,9 @@ import time
 import random
 from datetime import datetime
 import json
-from typing import Dict
+import os
+import pandas as pd
+from typing import Dict, List
 
 from simulator.flash_sim import FlashSimulator
 from simulator.veeprom_core import VEEPROMCore
@@ -277,6 +279,92 @@ def run_integration_test():
         'time': datetime.now().strftime('%H:%M:%S'),
         'details': results
     }
+
+# ============== NEW CSV DATA ROUTES ==============
+@app.route('/api/csv-list')
+def get_csv_list():
+    """Get list of CSV files in exports directory"""
+    exports_dir = 'exports'
+    if not os.path.exists(exports_dir):
+        return jsonify([])
+    
+    files = [f for f in os.listdir(exports_dir) if f.endswith('.xlsx')]
+    files.sort(reverse=True)  # Most recent first
+    return jsonify(files[:10])  # Return last 10 files
+
+@app.route('/api/csv-data/<filename>')
+def get_csv_data(filename):
+    """Get processed CSV data for visualization"""
+    try:
+        filepath = os.path.join('exports', filename)
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'File not found'}), 404
+        
+        # Read Excel file
+        df = pd.read_excel(filepath, sheet_name='Summary')
+        
+        # Process data for charts
+        timestamps = df['Timestamp'].tolist() if 'Timestamp' in df.columns else []
+        wear_balance = df['P1 Wear Balance'].tolist() if 'P1 Wear Balance' in df.columns else []
+        accuracy = df['P2 Accuracy'].tolist() if 'P2 Accuracy' in df.columns else []
+        writes = df['Flash Writes'].tolist() if 'Flash Writes' in df.columns else []
+        
+        # Try to read other sheets
+        p3_health = []
+        p2_health = []
+        reads = []
+        
+        try:
+            df_p3 = pd.read_excel(filepath, sheet_name='Patent3_SelfHealing')
+            p3_health = df_p3['health'].tolist() if 'health' in df_p3.columns else []
+        except:
+            pass
+        
+        try:
+            df_p2 = pd.read_excel(filepath, sheet_name='Patent2_Predictive')
+            p2_health = df_p2['avg_health'].tolist() if 'avg_health' in df_p2.columns else []
+        except:
+            pass
+        
+        try:
+            df_flash = pd.read_excel(filepath, sheet_name='Flash_Stats')
+            reads = df_flash['reads'].tolist() if 'reads' in df_flash.columns else []
+        except:
+            pass
+        
+        # Calculate summary metrics
+        summary = {
+            'total_points': len(df),
+            'start_date': timestamps[0] if timestamps else 'N/A',
+            'end_date': timestamps[-1] if timestamps else 'N/A',
+            'total_writes': int(sum(writes)) if writes else 0,
+            'total_reads': int(sum(reads)) if reads else 0,
+            'total_erases': 0,  # Not directly available
+            'avg_wear_balance': float(sum(wear_balance) / len(wear_balance)) if wear_balance else 0,
+            'avg_accuracy': float(sum(accuracy) / len(accuracy)) if accuracy else 0,
+            'avg_p3_health': float(sum(p3_health) / len(p3_health)) if p3_health else 100,
+            'max_write_time': max(writes) if writes else 0,
+            'min_write_time': min(writes) if writes else 0
+        }
+        
+        # Prepare chart data
+        chart_data = {
+            'timestamps': timestamps[-50:],  # Last 50 points
+            'wear_balance': wear_balance[-50:],
+            'accuracy': accuracy[-50:],
+            'writes': writes[-50:],
+            'reads': reads[-50:],
+            'p3_health': p3_health[-50:],
+            'p2_health': p2_health[-50:]
+        }
+        
+        return jsonify({
+            'summary': summary,
+            'charts': chart_data
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ============== FLASK ROUTES ==============
 @app.route('/')

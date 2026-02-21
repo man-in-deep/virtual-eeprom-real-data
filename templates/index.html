@@ -20,6 +20,7 @@
             <button id="stopBtn" class="btn btn-danger">⏹ Stop Simulation</button>
             <button id="resetBtn" class="btn btn-warning">🔄 Reset</button>
             <button id="exportBtn" class="btn btn-info">📥 Export to Excel</button>
+            <button id="refreshCsvBtn" class="btn btn-primary">🔄 Refresh CSV Data</button>
         </div>
 
         <div class="status-bar">
@@ -34,6 +35,10 @@
             <div class="status-item">
                 <span class="status-label">Uptime:</span>
                 <span id="uptime" class="status-value">0s</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Last CSV:</span>
+                <span id="lastCsvFile" class="status-value">None</span>
             </div>
         </div>
 
@@ -128,6 +133,61 @@
             </div>
         </div>
 
+        <!-- New CSV Data Visualization Section -->
+        <div class="csv-dashboard">
+            <h3>📊 CSV Data Visualization Dashboard</h3>
+            <div class="csv-controls">
+                <select id="csvFileSelect" class="csv-select">
+                    <option value="">Select CSV file...</option>
+                </select>
+                <button id="loadCsvBtn" class="btn btn-primary">Load Selected CSV</button>
+                <button id="refreshCsvListBtn" class="btn btn-info">↻ Refresh List</button>
+            </div>
+            
+            <div class="csv-metrics" id="csvMetrics">
+                <div class="metric-card">
+                    <h4>Total Data Points</h4>
+                    <div class="metric-value" id="csvTotalPoints">0</div>
+                </div>
+                <div class="metric-card">
+                    <h4>Avg Wear Balance</h4>
+                    <div class="metric-value" id="csvAvgWear">0%</div>
+                </div>
+                <div class="metric-card">
+                    <h4>Avg Accuracy</h4>
+                    <div class="metric-value" id="csvAvgAccuracy">0%</div>
+                </div>
+                <div class="metric-card">
+                    <h4>Total Writes</h4>
+                    <div class="metric-value" id="csvTotalWrites">0</div>
+                </div>
+            </div>
+            
+            <div class="csv-charts">
+                <div class="chart-container">
+                    <h4>Wear Balance Trend</h4>
+                    <div id="csvWearChart" class="csv-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <h4>Accuracy Trend</h4>
+                    <div id="csvAccuracyChart" class="csv-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <h4>Operations Over Time</h4>
+                    <div id="csvOpsChart" class="csv-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <h4>Health Metrics</h4>
+                    <div id="csvHealthChart" class="csv-chart"></div>
+                </div>
+            </div>
+            
+            <div class="csv-summary" id="csvSummary">
+                <h4>CSV Data Summary</h4>
+                <pre id="csvSummaryText">No data loaded</pre>
+            </div>
+        </div>
+
         <div class="comparison">
             <h3>📊 REAL Comparison: With Patents vs Without</h3>
             <div class="comparison-grid" id="comparison">
@@ -135,6 +195,7 @@
             </div>
         </div>
 
+        <!-- Enhanced Test Results Section -->
         <div class="test-results">
             <h3>🧪 Test Results (REAL)</h3>
             <div class="test-grid" id="tests">
@@ -157,6 +218,25 @@
                 <div class="test-item" onclick="runTest('integration')">
                     <span>Integration Test</span>
                     <span id="test-integration" class="test-status">⚪ Not Run</span>
+                </div>
+            </div>
+            
+            <!-- Test Details Panel -->
+            <div class="test-details-panel" id="testDetailsPanel" style="display: none;">
+                <div class="test-details-header">
+                    <h4 id="testDetailsTitle">Test Details</h4>
+                    <button class="close-btn" onclick="closeTestDetails()">×</button>
+                </div>
+                <div class="test-details-content" id="testDetailsContent">
+                    <div class="test-progress">
+                        <div class="progress-bar" id="testProgressBar" style="width: 0%;">0%</div>
+                    </div>
+                    <div class="test-stats">
+                        <div class="stat">Passed: <span id="testPassed">0</span></div>
+                        <div class="stat">Total: <span id="testTotal">0</span></div>
+                        <div class="stat">Time: <span id="testTime">0s</span></div>
+                    </div>
+                    <div class="test-steps" id="testSteps"></div>
                 </div>
             </div>
         </div>
